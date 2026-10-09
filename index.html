@@ -1,292 +1,112 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FALL OUT STUDIO</title>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Caveat:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;1,300&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-
-<svg width="0" height="0" style="position:absolute">
-  <defs>
-    <filter id="rough" x="-5%" y="-5%" width="110%" height="110%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" seed="2" result="noise"/>
-      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.5" xChannelSelector="R" yChannelSelector="G"/>
-    </filter>
-    <filter id="sketch" x="-5%" y="-5%" width="110%" height="110%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.065" numOctaves="3" seed="5" result="noise"/>
-      <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" xChannelSelector="R" yChannelSelector="G"/>
-    </filter>
-    <filter id="grain">
-      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch" result="noise"/>
-      <feColorMatrix type="saturate" values="0" in="noise" result="grayNoise"/>
-      <feBlend in="SourceGraphic" in2="grayNoise" mode="multiply" result="blend"/>
-      <feComposite in="blend" in2="SourceGraphic" operator="in"/>
-    </filter>
-  </defs>
-</svg>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Larvatus의 기록 공간. 일상, 기계공학, 언어, 그리고 작은 프로젝트를 기록합니다.">
+  <meta name="theme-color" content="#EDF4FE">
+  <title>Larvatus</title>
+  <link rel="icon" href="/favicon.ico" sizes="32x32">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono&family=Gugi&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/script.js" defer></script>
 </head>
 <body>
-
-<div class="cursor" id="cursor"></div>
-<div class="cursor-ring" id="cursorRing"></div>
-<div class="page-progress" id="pageProgress"></div>
-
-<div id="intro">
-  <div class="intro-bloom"></div>
-
-  <svg class="intro-scribble" viewBox="0 0 200 200">
-    <path d="M100,10 C145,8 192,48 194,100 C196,152 155,194 100,193 C45,192 6,152 8,100 C10,48 55,12 100,10 Z"
-      fill="none" stroke="var(--blue2)" stroke-width="1.5"
-      stroke-dasharray="8 5" style="filter:url(#rough)"/>
-    <path d="M100,26 C136,24 176,58 177,100 C178,142 144,177 100,176 C56,175 22,142 24,100 C26,58 64,28 100,26 Z"
-      fill="none" stroke="var(--blue)" stroke-width="1"
-      stroke-dasharray="4 8" style="filter:url(#rough)"/>
-  </svg>
-
-  <div class="intro-corner tc">~ studio init ~</div>
-  <div class="intro-corner tr" id="introTime">loading...</div>
-  <div class="intro-corner bl">handcrafted 2025</div>
-  <div class="intro-corner br">F●S</div>
-
-  <div class="intro-logo">
-    <span class="sub">✦ Fall Out ✦</span>
-    STUDIO
-  </div>
-  <p class="intro-hand">where every pixel is hand-picked ✦</p>
-  <div class="intro-bar"></div>
-</div>
-
-<div id="main">
-  <canvas id="canvas-bg"></canvas>
-
-  <nav id="nav">
-    <div class="nav-logo">F<span>●</span>S</div>
-    <ul class="nav-links">
-      <li><a href="#work">Work</a></li>
-      <li><a href="#about">About</a></li>
-      <li><a href="#">Journal</a></li>
-      <li><a href="#">Contact</a></li>
-    </ul>
-    <button class="nav-cta">Get in touch ↗</button>
-  </nav>
-
-  <section id="hero">
-    <svg class="deco-svg" style="top:80px;right:60px;width:220px;height:220px;opacity:.07;z-index:1" viewBox="0 0 220 220">
-      <rect x="10" y="10" width="200" height="200" rx="4" fill="none" stroke="var(--dark)" stroke-width="1.5" style="filter:url(#rough)"/>
-      <rect x="30" y="30" width="160" height="160" rx="4" fill="none" stroke="var(--blue2)" stroke-width="1" stroke-dasharray="6 4" style="filter:url(#rough)"/>
-      <line x1="10" y1="110" x2="210" y2="110" stroke="var(--dark)" stroke-width=".8" style="filter:url(#rough)"/>
-      <line x1="110" y1="10" x2="110" y2="210" stroke="var(--dark)" stroke-width=".8" style="filter:url(#rough)"/>
-    </svg>
-
-    <svg class="deco-svg" style="bottom:80px;right:240px;width:140px;height:140px;opacity:.09;z-index:1" viewBox="0 0 140 140">
-      <circle cx="70" cy="70" r="60" fill="none" stroke="var(--blue2)" stroke-width="1.5" style="filter:url(#rough)"/>
-      <circle cx="70" cy="70" r="40" fill="none" stroke="var(--blue)" stroke-width="1" stroke-dasharray="5 4" style="filter:url(#rough)"/>
-      <circle cx="70" cy="70" r="6" fill="var(--blue3)" style="filter:url(#rough)"/>
-    </svg>
-
-    <svg class="deco-svg" style="top:160px;left:0;width:120px;height:300px;opacity:.08;z-index:1" viewBox="0 0 120 300">
-      <g fill="var(--dark)">
-        <circle cx="20" cy="20" r="2.5"/><circle cx="50" cy="20" r="2.5"/><circle cx="80" cy="20" r="2.5"/>
-        <circle cx="20" cy="50" r="2.5"/><circle cx="50" cy="50" r="2.5"/><circle cx="80" cy="50" r="2.5"/>
-        <circle cx="20" cy="80" r="2.5"/><circle cx="50" cy="80" r="2.5"/><circle cx="80" cy="80" r="2.5"/>
-        <circle cx="20" cy="110" r="2.5"/><circle cx="50" cy="110" r="2.5"/><circle cx="80" cy="110" r="2.5"/>
-        <circle cx="20" cy="140" r="2.5"/><circle cx="50" cy="140" r="2.5"/><circle cx="80" cy="140" r="2.5"/>
-        <circle cx="20" cy="170" r="2.5"/><circle cx="50" cy="170" r="2.5"/><circle cx="80" cy="170" r="2.5"/>
-        <circle cx="20" cy="200" r="2.5"/><circle cx="50" cy="200" r="2.5"/><circle cx="80" cy="200" r="2.5"/>
-      </g>
-    </svg>
-
-    <div class="wrap">
-      <div class="hero-callout"><span class="icon">✏️</span> Creative Studio — est. 2025</div>
-      <div class="hero-eyebrow">↳ we make things that matter</div>
-
-      <h1 class="hero-title">
-        <div>MAKE</div>
-        <div class="outline">SOME</div>
-        <div class="accent">NOISE.
-          <svg class="squiggle" viewBox="0 0 400 18" fill="none" preserveAspectRatio="none">
-            <path d="M2,12 C30,4 60,16 90,9 C120,2 150,14 180,8 C210,2 240,14 270,8 C300,2 330,15 360,9 C380,5 395,11 398,10"
-              stroke="var(--blue2)" stroke-width="2.5" stroke-linecap="round" style="filter:url(#rough)"/>
-          </svg>
-        </div>
-      </h1>
-
-      <div class="hero-bottom">
-        <p class="hero-desc">We build bold, fearless digital experiences that refuse to be ignored. Design that hits like a power chord.</p>
-        <div class="hero-actions">
-          <button class="btn-solid">View Our Work →</button>
-          <button class="btn-outline">Play Reel ▶</button>
-        </div>
-      </div>
-
-      <div class="hero-scroll">scroll to explore</div>
-      <div class="hero-badge">
-        <svg viewBox="0 0 100 100" fill="none">
-          <path id="cp" d="M50,50 m-35,0 a35,35 0 1,1 70,0 a35,35 0 1,1 -70,0" style="filter:url(#rough)"/>
-          <text font-family="Caveat" font-size="9" fill="rgba(123,174,212,.6)">
-            <textPath href="#cp">Fall Out Studio · 2025 · crafted · by · hand · </textPath>
-          </text>
-        </svg>
-        <div class="hero-badge-c">F●S</div>
-      </div>
+  <a class="skip-link" href="#main">본문으로 건너뛰기</a>
+  <header class="wrap nav">
+    <a class="wordmark" href="/index.html">larvatus</a>
+    <button class="btn btn-outline menu-toggle" type="button" aria-expanded="false" aria-controls="nav-panel">메뉴</button>
+    <div class="nav-panel" id="nav-panel">
+      <nav class="nav-links" aria-label="메인 메뉴"><a href="/personal-journal/personal-journal.html">Journal</a><a href="/mechanik-note/mechanik-note.html">Mechanic</a><a href="/language-log/language-log.html">Language</a><a href="/side-project/side-project.html">Projects</a></nav>
+      <a class="btn btn-outline" href="https://github.com/Larvatus327" target="_blank" rel="noopener noreferrer">GitHub</a>
     </div>
-  </section>
-
-  <div class="marquee-wrap">
-    <div class="marquee-track" id="marqueeTrack"></div>
-  </div>
-
-  <section id="work">
-    <div class="wrap">
-
-      <svg class="deco-svg" style="top:-20px;right:-20px;width:160px;height:160px;opacity:.06;z-index:0" viewBox="0 0 160 160">
-        <path d="M80,5 L155,40 L155,120 L80,155 L5,120 L5,40 Z" fill="none" stroke="var(--dark)" stroke-width="1.5" style="filter:url(#rough)"/>
-        <path d="M80,20 L140,50 L140,110 L80,140 L20,110 L20,50 Z" fill="none" stroke="var(--blue2)" stroke-width="1" stroke-dasharray="4 5" style="filter:url(#rough)"/>
-      </svg>
-
-      <div class="section-header">
+  </header>
+  <main id="main">
+    <section class="wrap hero">
+      <div class="hero-copy">
+        <h1 class="h1 metal-text">배우고, 만들고,<br>기록합니다.</h1>
+        <p class="hero-sub">독일 북쪽에서 지내며 쓰는 일상, 기계공학 노트, 언어 공부, 그리고 작은 프로젝트의 기록.</p>
+        <a class="btn btn-primary" href="#recent">최근 글 읽기</a>
+      </div>
+      <img src="/assets/img/hero.jpg" width="1080" height="1160" alt="함부르크 슈파이허슈타트의 붉은 벽돌 창고와 운하" fetchpriority="high">
+    </section>
+    <section class="wrap section" id="recent" data-reveal>
+      <h2 class="h2">최근 글</h2>
+      <div class="recent-body">
+        <a class="featured" href="/personal-journal/note.html?label=4">
+          <img src="/assets/img/featured.jpg" width="1360" height="840" alt="브레멘 음악대 동상" loading="lazy" decoding="async">
+          <div>
+            <p class="featured-meta mono"><span>Personal Journal</span><time datetime="2025-08-13">2025.08.13</time></p>
+            <h3>Bremen 3일차 여행</h3>
+          </div>
+        </a>
         <div>
-          <div class="section-label">✦ Selected Work</div>
-          <h2 class="section-title">PROJECTS</h2>
-        </div>
-        <div class="section-meta">06 / 2025</div>
-      </div>
-
-      <div class="cards-grid">
-
-        <div class="card wide">
-          <div class="card-tag"><span class="dot"></span>Brand Identity</div>
-          <h3 class="card-title">DARK HORSE<br>RECORDS</h3>
-          <p class="card-body">Complete visual identity for an underground label pushing genre limits.</p>
-          <div class="notion-divider"></div>
-          <div class="card-visual" id="waveform1"></div>
-          <div class="card-num">01</div>
-          <div class="card-arrow">↗</div>
-        </div>
-
-        <div class="card narrow">
-          <div class="card-tag"><span class="dot"></span>Web Experience</div>
-          <h3 class="card-title">CORK TREE<br>DIGITAL</h3>
-          <p class="card-body">Immersive 3D platform for an independent artist collective.</p>
-          <div class="notion-quote">3.2M visitors in first year ✦</div>
-          <div class="stat-row">
-            <div><div class="stat-num">3.2M</div><div class="stat-label">Visitors</div></div>
-            <div><div class="stat-num">98</div><div class="stat-label">Perf Score</div></div>
-          </div>
-          <div class="card-num">02</div>
-          <div class="card-arrow">↗</div>
-        </div>
-
-        <div class="card third">
-          <div class="card-tag"><span class="dot"></span>Motion</div>
-          <h3 class="card-title">SIGNAL<br>NOISE</h3>
-          <p class="card-body">Generative audio-visual art for festival season.</p>
-          <div class="shapes-row">
-            <div class="notion-toggle">Generative</div>
-            <div class="notion-toggle">Festival</div>
-          </div>
-          <div class="card-num">03</div>
-          <div class="card-arrow">↗</div>
-        </div>
-
-        <div class="card third">
-          <div class="card-tag"><span class="dot"></span>Product</div>
-          <h3 class="card-title">VOID<br>APP</h3>
-          <p class="card-body">Light-mode SaaS dashboard for creative teams.</p>
-          <div class="shapes-row">
-            <div class="notion-toggle">SaaS</div>
-            <div class="notion-toggle">Dashboard</div>
-          </div>
-          <div class="card-num">04</div>
-          <div class="card-arrow">↗</div>
-        </div>
-
-        <div class="card third">
-          <div class="card-tag"><span class="dot"></span>Editorial</div>
-          <h3 class="card-title">THE<br>ZINE</h3>
-          <p class="card-body">Digital publication pushing edges of storytelling.</p>
-          <div class="notion-quote">Handcrafted, every issue ✦</div>
-          <div class="card-num">05</div>
-          <div class="card-arrow">↗</div>
-        </div>
-
-        <div class="card full">
-          <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:24px">
-            <div>
-              <div class="card-tag"><span class="dot"></span>Campaign + Strategy</div>
-              <h3 class="card-title" style="font-size:clamp(26px,3.2vw,46px)">INFINITY ON HIGH —<br>WORLD TOUR DIGITAL</h3>
-            </div>
-            <div style="display:flex;gap:36px">
-              <div><div class="stat-num">180+</div><div class="stat-label">Markets</div></div>
-              <div><div class="stat-num">4.8M</div><div class="stat-label">Reach</div></div>
-              <div><div class="stat-num">↑340%</div><div class="stat-label">Engagement</div></div>
-            </div>
-          </div>
-          <div class="card-num">06</div>
-          <div class="card-arrow">↗</div>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <section id="about">
-    <div class="wrap">
-      <div class="about-grid">
-        <div class="about-body">
-          <div class="section-label">✦ About the Studio</div>
-          <h2 class="section-title" style="margin-bottom:24px;position:relative">
-            WE DON'T<br>DO <span style="color:var(--blue2)">QUIET.</span>
-            <svg style="position:absolute;left:0;bottom:-8px;width:60%;height:10px;opacity:.5" viewBox="0 0 200 10" fill="none" preserveAspectRatio="none">
-              <path d="M2,7 C30,2 70,9 110,5 C140,2 170,8 198,6" stroke="var(--blue2)" stroke-width="2" stroke-linecap="round" style="filter:url(#rough)"/>
-            </svg>
-          </h2>
-          <p>We're a design studio that believes great work should feel like a show. Every pixel placed with intention. Every interaction crafted to spark something.</p>
-          <p>From brand identity to immersive web experiences, we work with the bold, the brave, and the ones who refuse to fit in.</p>
-
-          <div class="notion-quote" style="margin-top:24px">✏️ &nbsp; Currently open to new projects — let's make something unforgettable.</div>
-
-          <div style="margin-top:28px;display:flex;gap:12px">
-            <button class="btn-solid">Our Story →</button>
-            <button class="btn-outline">Meet the Team</button>
-          </div>
-        </div>
-
-        <div class="about-stats">
-          <div class="ablock">
-            <span class="ablock-icon">🎸</span>
-            <div class="ablock-num">08+</div>
-            <div class="ablock-label">Years in the game</div>
-          </div>
-          <div class="ablock">
-            <span class="ablock-icon">🚀</span>
-            <div class="ablock-num">120+</div>
-            <div class="ablock-label">Projects shipped</div>
-          </div>
-          <div class="ablock blue-fill">
-            <span class="ablock-icon">✦</span>
-            <div class="ablock-num">Currently accepting new projects for 2025</div>
-            <div class="ablock-label">Limited slots — don't sleep on it</div>
-          </div>
+          <a class="post-row" href="/personal-journal/note.html?label=5">
+            <span class="post-row-meta mono"><span>Personal Journal</span><time datetime="2025-08-31">2025.08.31</time></span>
+            <h3>Leipzig</h3>
+          </a>
+          <a class="post-row" href="/mechanik-note/note.html?label=1">
+            <span class="post-row-meta mono"><span>Mechanic Note</span><time datetime="2025-08-31">2025.08.31</time></span>
+            <h3>Git Command</h3>
+          </a>
+          <a class="post-row" href="/mechanik-note/note.html?label=2">
+            <span class="post-row-meta mono"><span>Mechanic Note</span><time datetime="2025-08-21">2025.08.21</time></span>
+            <h3>Jetson Nano 4GB (B01/SUB)</h3>
+          </a>
+          <a class="post-row" href="/mechanik-note/note.html?label=3">
+            <span class="post-row-meta mono"><span>Mechanic Note</span><time datetime="2025-08-11">2025.08.11</time></span>
+            <h3>LM Studio</h3>
+          </a>
+          <a class="post-row" href="/personal-journal/note.html?label=3">
+            <span class="post-row-meta mono"><span>Personal Journal</span><time datetime="2025-08-07">2025.08.07</time></span>
+            <h3>Weserburg Museum</h3>
+          </a>
         </div>
       </div>
-    </div>
-  </section>
-
-  <footer>
-    <div class="footer-logo">F<span>●</span>S</div>
-    <span class="footer-hand">handcrafted with ♥</span>
-    <ul class="footer-links">
-      <li><a href="#">Twitter</a></li>
-      <li><a href="#">Instagram</a></li>
-      <li><a href="#">Behance</a></li>
-      <li><a href="#">Dribbble</a></li>
-    </ul>
+    </section>
+    <section class="wrap section" data-reveal>
+      <h2 class="h2">기록하는 것들</h2>
+      <div class="bento">
+        <a class="tile tile--silver" href="/personal-journal/personal-journal.html">
+          <img src="/assets/img/journal.jpg" width="1400" height="640" alt="" loading="lazy" decoding="async">
+          <div class="tile-body">
+            <div><h3>Personal Journal</h3><p>평범한 하루 속 기억하고 싶은 순간들.<br>여행과 일상의 조각을 모읍니다.</p></div>
+            <div class="tile-foot"><span class="tile-word" aria-hidden="true"></span><span class="arrow" aria-hidden="true"></span></div>
+          </div>
+        </a>
+        <a class="tile tile--slate" href="/mechanik-note/mechanik-note.html">
+          
+          <div class="tile-body">
+            <div><h3>Mechanic Note</h3><p>어떻게 움직이고, 왜 그렇게 작동할까.<br>기계와 공학을 이해하는 기록.</p></div>
+            <div class="tile-foot"><span class="tile-word" aria-hidden="true"></span><span class="arrow" aria-hidden="true"></span></div>
+          </div>
+        </a>
+        <a class="tile tile--midnight" href="/language-log/language-log.html">
+          
+          <div class="tile-body">
+            <div><h3>Language Log</h3><p>새로운 언어로 넓어지는 세상.<br>한 단어, 한 문장씩 배워가는 과정.</p></div>
+            <div class="tile-foot"><span class="tile-word" aria-hidden="true">Hallo.</span><span class="arrow" aria-hidden="true"></span></div>
+          </div>
+        </a>
+        <a class="tile tile--silver" href="/side-project/side-project.html">
+          
+          <div class="tile-body">
+            <div><h3>Side Project</h3><p>작은 아이디어를 직접 만들어보는 곳.<br>실험하고 부딪히며 알아갑니다.</p></div>
+            <div class="tile-foot"><span class="tile-word" aria-hidden="true"></span><span class="arrow" aria-hidden="true"></span></div>
+          </div>
+        </a>
+      </div>
+    </section>
+    <section class="wrap about" data-reveal>
+      <h2>기록 너머의 작업과<br>이야기도 만나보세요.</h2>
+      <a class="btn btn-primary" href="https://github.com/Larvatus327" target="_blank" rel="noopener noreferrer">GitHub</a>
+    </section>
+  </main>
+  <footer class="wrap footer">
+    <p class="mono">© <span id="year">2026</span> Larvatus</p>
+    <a href="#main" aria-label="맨 위로"><span class="arrow arrow--up" aria-hidden="true"></span></a>
   </footer>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="script.js"></script>
 </body>
 </html>

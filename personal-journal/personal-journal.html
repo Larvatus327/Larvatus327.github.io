@@ -1,550 +1,81 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Personal Journal</title>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Caveat:wght@400;600;700&family=DM+Sans:wght@300;400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-
-<svg width="0" height="0" style="position:absolute">
-  <defs>
-    <filter id="rough" x="-8%" y="-8%" width="116%" height="116%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="3" result="noise"/>
-      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.2" xChannelSelector="R" yChannelSelector="G"/>
-    </filter>
-    <filter id="rough-sm" x="-5%" y="-5%" width="110%" height="110%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.055" numOctaves="3" seed="7" result="noise"/>
-      <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" xChannelSelector="R" yChannelSelector="G"/>
-    </filter>
-  </defs>
-</svg>
-
-<style>
-  :root{
-    --bg:#ECEBE6; --bg2:#E3E2DD; --white:#F7F6F2;
-    --blue:#A8C4DF; --blue2:#7AAFD4; --blue3:#CDE0F0;
-    --dark:#222220; --mid:#6A6A65; --light:#ADADAA;
-    --bdr:rgba(34,34,32,0.13);
-  }
-  *{ box-sizing:border-box; margin:0; padding:0; }
-  html,body{ height:100%; }
-  body{ background:var(--bg); font-family:'Caveat',cursive; overflow:hidden; color:var(--dark); cursor:none; }
-  a, button, [role="button"], .card, .card-inner{ cursor:none; }
-
-  /* ── 커스텀 커서 ── */
-  .cursor{
-    width:12px; height:12px;
-    background:var(--blue2);
-    border-radius:50%;
-    position:fixed; pointer-events:none; z-index:99999;
-    transform:translate(-50%,-50%);
-    transition:width .18s, height .18s, opacity .18s;
-  }
-  .cursor-ring{
-    width:28px; height:28px;
-    border:1.5px solid var(--blue2);
-    border-radius:50%;
-    position:fixed; pointer-events:none; z-index:99998;
-    transform:translate(-50%,-50%);
-    transition:left .09s, top .09s;
-    opacity:.45;
-    filter:url(#rough);
-  }
-  /* 드래그 중 커서 확대 */
-  body.is-dragging .cursor{ width:20px; height:20px; opacity:.7; }
-  body.is-dragging .cursor-ring{ width:44px; height:44px; opacity:.25; }
-
-  /* grain */
-  body::after{
-    content:''; position:fixed; inset:0; pointer-events:none; z-index:999;
-    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
-    opacity:0.035; mix-blend-mode:multiply;
-  }
-
-  #canvas-bg-journal{ position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:0; opacity:0.38; }
-  #particle-background{ position:fixed; inset:0; pointer-events:none; z-index:1; }
-  #particle-background .particle, #particle-background .line{ display:none !important; }
-
-  /* stage */
-  .stage{ position:relative; z-index:10; width:100vw; height:100vh; padding:40px; touch-action:pan-y pinch-zoom; cursor:grab; user-select:none; }
-
-  /* card */
-  .card{ position:absolute; will-change:transform; background:transparent; border:none; box-shadow:none; overflow:visible; }
-  .card-inner{
-    background:var(--white); border:1.5px solid var(--bdr);
-    border-radius:8px; overflow:hidden;
-    transition:transform .22s cubic-bezier(.16,1,.3,1), box-shadow .22s;
-    position:relative;
-  }
-  .card-inner::before{
-    content:''; position:absolute; top:0; left:0; right:0; height:2.5px;
-    background:linear-gradient(90deg,var(--blue3),var(--blue2)); z-index:2; pointer-events:none;
-  }
-  .card:hover .card-inner{ transform:translateY(-4px) rotate(0.2deg); box-shadow:4px 5px 0 var(--dark); cursor:pointer; }
-  .thumb{ display:block; width:100%; height:auto; aspect-ratio:4/3; object-fit:cover; filter:saturate(0.8) brightness(1.02); transition:filter .25s; }
-  .card:hover .thumb{ filter:saturate(1) brightness(1.05); }
-  .meta{ padding:12px 14px 14px; background:var(--white); }
-  .title{ font-family:'Anton',sans-serif; font-size:13px; letter-spacing:-0.01em; color:var(--dark); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:color .2s; line-height:1.2; }
-  .subtitle{ margin-top:4px; font-family:'Caveat',cursive; font-size:12px; color:var(--mid); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .byline-compact{ margin-top:5px; font-family:'Caveat',cursive; font-size:10px; color:var(--light); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .author-name{ color:var(--light); transition:color .2s; }
-  .card:hover .title{ color:var(--blue2); }
-  .card:hover .author-name{ color:var(--blue2); }
-
-  /* dots */
-  .dots{ position:absolute; left:12px; bottom:12px; display:grid; grid-template-columns:repeat(3,8px); gap:5px; opacity:.8; }
-  .dots i{ width:8px; height:8px; border-radius:50%; background:var(--blue3); border:1px solid var(--blue2); animation:pulse 1.6s ease-in-out infinite; }
-  .dots i:nth-child(2){ animation-delay:.12s } .dots i:nth-child(3){ animation-delay:.24s }
-  .dots i:nth-child(4){ animation-delay:.36s } .dots i:nth-child(5){ animation-delay:.48s }
-  @keyframes pulse{ 0%,100%{ transform:scale(.7); opacity:.5 } 50%{ transform:scale(1); opacity:1 } }
-
-  /* hud */
-  .hud{ position:fixed; left:20px; bottom:20px; color:var(--light); font-family:'Caveat',cursive; font-size:13px; background:var(--white); border:1.5px solid var(--bdr); border-radius:20px; padding:7px 14px; box-shadow:2px 3px 0 rgba(34,34,32,0.1); opacity:.9; z-index:50; display:flex; gap:10px; align-items:center; }
-  .hud .count{ color:var(--blue2); }
-  .hud button{ appearance:none; border:1.5px solid var(--bdr); background:var(--dark); color:var(--white); border-radius:20px; padding:4px 12px; font-family:'Caveat',cursive; font-size:12px; cursor:pointer; transition:background .2s; }
-  .hud button:hover{ background:var(--blue2); border-color:var(--blue2); }
-
-  /* overlay */
-  .overlay{ position:fixed; inset:0; display:none; place-items:center; z-index:200; }
-  .overlay.open{ display:grid; }
-  .overlay .bg{ position:absolute; inset:0; background:var(--bg); opacity:.92; cursor:zoom-out; }
-  .overlay .scrim{ position:absolute; inset:0; background:transparent; pointer-events:none; }
-  .overlay .panel{ position:relative; width:min(1300px,calc(100vw - 80px)); max-height:90vh; background:var(--white); color:var(--dark); border:1.5px solid var(--bdr); border-radius:6px; box-shadow:8px 10px 0 var(--dark); overflow:auto; transform:scale(.985); animation:popIn .25s cubic-bezier(.16,1,.3,1) forwards; }
-  @keyframes popIn{ to{ transform:scale(1); } }
-  .overlay header{ display:flex; justify-content:flex-end; align-items:center; padding:12px 16px; border-bottom:1.5px solid var(--bdr); }
-  .close{ border:1.5px solid var(--bdr); background:var(--bg2); color:var(--dark); border-radius:4px; padding:6px 12px; font-family:'Caveat',cursive; font-size:18px; cursor:pointer; transition:background .2s, border-color .2s; }
-  .close:hover{ background:var(--blue3); border-color:var(--blue2); }
-  .overlay .content{ padding:24px; }
-  .overlay .content-grid{ display:grid; grid-template-columns:1.1fr 1fr; gap:32px; align-items:center; min-height:clamp(380px,65vh,780px); }
-  .overlay .left{ display:flex; flex-direction:column; gap:16px; justify-content:center; align-items:center; text-align:center; }
-  .overlay .left h1{ font-family:'Anton',sans-serif; font-size:clamp(24px,3.5vw,40px); letter-spacing:-0.02em; line-height:1.05; color:var(--dark); }
-  .overlay .left h1::after{ content:''; display:block; height:9px; width:60%; background:var(--blue3); border-radius:2px; opacity:0.65; margin:6px auto 0; }
-  .overlay .left .byline{ font-family:'Caveat',cursive; font-size:14px; color:var(--light); }
-  .overlay .left p{ font-family:'Caveat',cursive; font-size:15px; color:var(--mid); line-height:1.6; }
-  .overlay .actions{ display:flex; gap:10px; margin-top:4px; justify-content:center; flex-wrap:wrap; }
-  .overlay .btn{ appearance:none; border:1.5px solid var(--dark); background:var(--dark); color:var(--white); border-radius:3px; padding:10px 22px; font-family:'Caveat',cursive; font-size:16px; text-decoration:none; transition:background .2s, border-color .2s; }
-  .overlay .btn:hover{ background:var(--blue2); border-color:var(--blue2); }
-  .overlay .btn.secondary{ background:var(--white); color:var(--dark); }
-  .overlay .btn.secondary:hover{ background:var(--blue3); border-color:var(--blue2); color:var(--dark); }
-  .overlay .preview{ grid-column:2; background:var(--bg2) center/cover no-repeat; border-radius:4px; min-height:360px; aspect-ratio:4/3; border:1.5px solid var(--bdr); }
-  @media (max-width:900px){ .overlay .content-grid{ grid-template-columns:1fr; } .overlay .preview{ grid-column:auto; order:-1; min-height:220px; } }
-
-  /* mini head */
-  #miniHead{ position:fixed; right:20px; bottom:20px; z-index:100; background:rgba(236,235,230,0.92); backdrop-filter:blur(16px); border:1.5px solid var(--bdr); border-radius:6px; box-shadow:3px 4px 0 rgba(34,34,32,0.12); padding:8px 12px; display:flex; align-items:center; gap:10px; transition:transform .2s, box-shadow .2s; }
-  #miniHead:hover{ transform:translateY(-2px); box-shadow:4px 6px 0 rgba(34,34,32,0.18); }
-  #miniHead .logo a{ display:flex; align-items:center; text-decoration:none; color:var(--dark); }
-  #miniHead .logo-img{ max-height:34px; width:auto; filter:saturate(0.6) brightness(0.75); transition:filter .2s; }
-  #miniHead:hover .logo-img{ filter:saturate(1) brightness(1); }
-  .grid-button{ background:var(--white); border:1.5px solid var(--bdr); border-radius:4px; padding:7px; cursor:pointer; transition:background .18s, border-color .18s; }
-  .grid-button:hover{ background:var(--blue3); border-color:var(--blue2); }
-  .grid-icon{ display:grid; grid-template-columns:repeat(3,5px); grid-template-rows:repeat(3,5px); gap:3px; }
-  .grid-icon span{ width:5px; height:5px; background:var(--mid); border-radius:1px; transition:background .18s; }
-  .grid-button:hover .grid-icon span{ background:var(--dark); }
-
-  /* radio menu */
-  .radio-container{ position:fixed; z-index:300; background:rgba(236,235,230,0.97); backdrop-filter:blur(20px); border:1.5px solid var(--bdr); border-radius:5px; padding:16px 18px; box-shadow:3px 4px 0 rgba(34,34,32,0.1); display:none; min-width:180px; }
-  .radio-container::before{ content:'✦ Navigate'; display:block; font-family:'Space Mono',monospace; font-size:9px; letter-spacing:0.3em; text-transform:uppercase; color:var(--blue2); padding-bottom:10px; margin-bottom:10px; border-bottom:1px solid rgba(34,34,32,0.08); }
-  .radio-labels{ display:flex; flex-direction:column; gap:2px; }
-  .radio-labels input[type="radio"]{ position:absolute; opacity:0; width:0; height:0; pointer-events:none; }
-  .radio-labels label{ font-family:'Caveat',cursive; font-size:16px; color:var(--mid); padding:8px 12px; border-radius:3px; cursor:pointer; display:flex; align-items:center; gap:9px; transition:background .15s, color .15s; }
-  .radio-labels label::before{ content:''; flex-shrink:0; width:5px; height:5px; background:var(--blue3); border:1.5px solid var(--blue); border-radius:50%; transition:background .15s, border-color .15s; }
-  .radio-labels label:hover{ background:var(--blue3); color:var(--dark); }
-  .radio-labels label:hover::before{ background:var(--blue2); border-color:var(--blue2); }
-  .radio-labels input[type="radio"]:checked + label{ background:var(--blue3); color:var(--dark); font-weight:700; }
-  .radio-labels input[type="radio"]:checked + label::before{ background:var(--blue2); border-color:var(--blue2); }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="평범한 하루 속 기억하고 싶은 순간들. 여행과 일상의 조각을 모읍니다.">
+  <meta name="theme-color" content="#EDF4FE">
+  <title>Personal Journal | Larvatus</title>
+  <link rel="icon" href="/favicon.ico" sizes="32x32">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono&family=Gugi&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/script.js" defer></script>
 </head>
 <body>
-
-  <!-- 커스텀 커서 -->
-  <div class="cursor" id="cursorDot"></div>
-  <div class="cursor-ring" id="cursorRing"></div>
-
-  <canvas id="canvas-bg-journal"></canvas>
-  <div id="particle-background" aria-hidden="true"></div>
-
-  <div id="miniHead" role="navigation" aria-label="Quick Pages">
-    <div class="logo">
-      <a href="/index.html"><img src="logo_green.png" alt="" class="logo-img"/></a>
+  <a class="skip-link" href="#main">본문으로 건너뛰기</a>
+  <header class="wrap nav">
+    <a class="wordmark" href="/index.html">larvatus</a>
+    <button class="btn btn-outline menu-toggle" type="button" aria-expanded="false" aria-controls="nav-panel">메뉴</button>
+    <div class="nav-panel" id="nav-panel">
+      <nav class="nav-links" aria-label="메인 메뉴"><a href="/personal-journal/personal-journal.html" aria-current="page">Journal</a><a href="/mechanik-note/mechanik-note.html">Mechanic</a><a href="/language-log/language-log.html">Language</a><a href="/side-project/side-project.html">Projects</a></nav>
+      <a class="btn btn-outline" href="https://github.com/Larvatus327" target="_blank" rel="noopener noreferrer">GitHub</a>
     </div>
-    <button class="grid-button" id="gridToggleBtn" aria-label="페이지 선택">
-      <div class="grid-icon">
-        <span></span><span></span><span></span>
-        <span></span><span></span><span></span>
-        <span></span><span></span><span></span>
+  </header>
+  <main id="main">
+    <div class="wrap page-head">
+      <div class="panel panel--silver">
+        <h1 class="h1 metal-text">Personal Journal</h1>
+        <div class="panel-info"><p>평범한 하루 속 기억하고 싶은 순간들.<br>여행과 일상의 조각을 모읍니다.</p><span class="mono">글 5개</span></div>
       </div>
-    </button>
-  </div>
-
-  <div class="radio-container" id="pageGrid" role="menu" aria-label="Page selector">
-    <div class="radio-labels">
-      <input type="radio" name="page" id="page-1" data-page="1" data-url="https://RabE-log.github.io" checked />
-      <label for="page-1">RabE</label>
-      <input type="radio" name="page" id="page-2" data-page="2" data-url="/personal-journal/personal-journal.html" />
-      <label for="page-2">Personal Journal</label>
-      <input type="radio" name="page" id="page-3" data-page="3" data-url="/mechanik-note/mechanik-note.html" />
-      <label for="page-3">Mechanik Note</label>
-      <input type="radio" name="page" id="page-4" data-page="4" data-url="/language-log/language-log.html" />
-      <label for="page-4">Language Log</label>
-      <input type="radio" name="page" id="page-5" data-page="5" data-url="/side-project/side-project.html" />
-      <label for="page-5">Side Project</label>
     </div>
-  </div>
-
-  <div id="stage" class="stage" aria-live="polite"></div>
-  <div class="hud">
-    <span class="count" id="hudCount">Journal: 0</span>
-    <button id="btnRefresh">refresh</button>
-  </div>
-
-  <div id="overlay" class="overlay" aria-hidden="true">
-    <div class="bg"></div><div class="scrim"></div>
-    <div class="panel" role="dialog" aria-modal="true" aria-labelledby="ovTitle">
-      <header><button class="close" id="ovClose" aria-label="Close">x</button></header>
-      <div class="content content-grid">
-        <div class="left">
-          <h1 id="ovTitle"></h1>
-          <div class="byline" id="ovByline"></div>
-          <p id="ovDesc"></p>
-          <div class="actions">
-            <a id="ovOpen" class="btn" target="_self">read Journal</a>
-            <a id="ovLabel" class="btn secondary" target="_self" style="display:none">label</a>
-          </div>
+    <section class="wrap section cards">
+      <a class="card" href="/personal-journal/note.html?label=5" data-reveal>
+        <img src="/assets/img/j_leipzig.jpg" width="1800" height="690" alt="라이프치히 중앙역 정면" fetchpriority="high">
+        <div class="card-text">
+          <time class="mono" datetime="2025-08-31">2025.08.31</time>
+          <h2>Leipzig</h2>
+          <p>Die Stadt der Musik</p>
         </div>
-        <div class="preview" id="ovPreview"></div>
-      </div>
-    </div>
-  </div>
-
-<script>
-/* ── 커스텀 커서 JS ── */
-(function(){
-  const dot  = document.getElementById('cursorDot');
-  const ring = document.getElementById('cursorRing');
-  if(!dot || !ring) return;
-
-  let mx=window.innerWidth/2, my=window.innerHeight/2;
-
-  document.addEventListener('mousemove', e=>{
-    mx=e.clientX; my=e.clientY;
-    dot.style.left  = mx+'px';
-    dot.style.top   = my+'px';
-    ring.style.left = mx+'px';
-    ring.style.top  = my+'px';
-  });
-
-  // 클릭 시 커서 수축
-  document.addEventListener('mousedown', ()=>{
-    dot.style.transform  = 'translate(-50%,-50%) scale(0.6)';
-    ring.style.transform = 'translate(-50%,-50%) scale(0.8)';
-  });
-  document.addEventListener('mouseup', ()=>{
-    dot.style.transform  = 'translate(-50%,-50%) scale(1)';
-    ring.style.transform = 'translate(-50%,-50%) scale(1)';
-  });
-
-  // 카드 호버 시 링 확대
-  document.addEventListener('mouseover', e=>{
-    if(e.target.closest('.card-inner')){
-      dot.style.width='18px'; dot.style.height='18px'; dot.style.opacity='.6';
-      ring.style.width='48px'; ring.style.height='48px';
-    } else {
-      dot.style.width=''; dot.style.height=''; dot.style.opacity='';
-      ring.style.width=''; ring.style.height='';
-    }
-  });
-})();
-</script>
-
-<script>
-(function initMiniHead(){
-  const head=document.getElementById('miniHead');
-  const gridBtn=document.getElementById('gridToggleBtn');
-  const pageGrid=document.getElementById('pageGrid');
-  if(!head||!gridBtn||!pageGrid) return;
-  function positionGrid(){
-    const rect=gridBtn.getBoundingClientRect();
-    pageGrid.style.right=(window.innerWidth-rect.right)+'px';
-    pageGrid.style.bottom=(window.innerHeight-rect.top+8)+'px';
-    pageGrid.style.left='auto'; pageGrid.style.top='auto';
-  }
-  gridBtn.addEventListener('click',(e)=>{
-    e.stopPropagation();
-    const show=pageGrid.style.display!=='flex';
-    pageGrid.style.display=show?'flex':'none';
-    pageGrid.style.flexDirection='column';
-    if(show) positionGrid();
-  });
-  document.addEventListener('click',(e)=>{
-    if(!head.contains(e.target)&&!pageGrid.contains(e.target)) pageGrid.style.display='none';
-  });
-  pageGrid.addEventListener('change',(e)=>{
-    if(e.target.name==='page'){ const url=e.target.dataset.url; if(url) window.location.href=url; }
-  });
-  const pageTitle=document.title.trim();
-  pageGrid.querySelectorAll('input[name="page"]').forEach(input=>{
-    const label=pageGrid.querySelector('label[for="'+input.id+'"]');
-    if(label&&label.textContent.trim()===pageTitle) input.checked=true;
-  });
-})();
-</script>
-
-<script>
-(function(){
-  const SPEED_BASE=0.35, SPEED_VARIATION=0.20;
-  const DISCOVERY={maxPosts:30,pollInterval:12000};
-
-  const stage=document.getElementById('stage');
-  const overlay=document.getElementById('overlay');
-  const ovTitle=document.getElementById('ovTitle');
-  const ovByline=document.getElementById('ovByline');
-  const ovDesc=document.getElementById('ovDesc');
-  const ovOpen=document.getElementById('ovOpen');
-  const ovLabel=document.getElementById('ovLabel');
-  const ovPreview=document.getElementById('ovPreview');
-  const ovClose=document.getElementById('ovClose');
-  const hudCount=document.getElementById('hudCount');
-  const btnRefresh=document.getElementById('btnRefresh');
-
-  let items=[],cards=[],pause=false,seen=new Set();
-
-  // ── 드래그 상태 ──
-  let isDragging=false, dragStartX=0, dragStartY=0, dragDeltaX=0, wasDragged=false;
-  const DRAG_THRESHOLD=4; // px 이상 움직여야 드래그로 판단
-
-  stage.addEventListener('pointerdown', e=>{
-    // 카드 내부 클릭은 제외 (card-inner)
-    if(e.target.closest('.card-inner')) return;
-    isDragging=true; wasDragged=false;
-    dragStartX=e.clientX; dragStartY=e.clientY; dragDeltaX=0;
-    stage.setPointerCapture(e.pointerId);
-    document.body.classList.add('is-dragging');
-  });
-
-  stage.addEventListener('pointermove', e=>{
-    if(!isDragging) return;
-    const dx=e.clientX-dragStartX;
-    if(Math.abs(dx)>DRAG_THRESHOLD) wasDragged=true;
-    const moveDelta=dx-dragDeltaX;
-    dragDeltaX=dx;
-    // 모든 카드를 마우스 이동 방향으로 이동
-    for(const c of cards){
-      c.x+=moveDelta;
-      c.el.style.left=c.x+'px';
-    }
-  });
-
-  stage.addEventListener('pointerup', e=>{
-    isDragging=false;
-    document.body.classList.remove('is-dragging');
-    if(stage.hasPointerCapture(e.pointerId)) stage.releasePointerCapture(e.pointerId);
-  });
-
-  stage.addEventListener('pointercancel', e=>{
-    isDragging=false;
-    document.body.classList.remove('is-dragging');
-  });
-
-  // ★ 핵심 수정: abs() 경로 중복 방지
-  // post 파일 안의 이미지 경로가 이미 "personal-journal/..."를 포함하는 경우 중복 제거
-  function abs(s){
-    if(!s||s.startsWith('http')||s.startsWith('data:')) return s;
-    if(s.startsWith('/')) return s;
-    // "personal-journal/" 또는 "personal-journal\" 로 시작하면 앞에 / 만 추가
-    if(s.startsWith('personal-journal/')) return '/'+s;
-    return '/personal-journal/'+s;
-  }
-
-  async function discoverInitial(){
-    const promises=[];
-    for(let i=1;i<=DISCOVERY.maxPosts;i++) promises.push(tryFetchPost(i));
-    await Promise.allSettled(promises);
-  }
-  async function discoverIncremental(){
-    for(let i=1;i<=DISCOVERY.maxPosts;i++) await tryFetchPost(i);
-  }
-  async function tryFetchPost(i){
-    const href='post/post'+i+'.html';
-    if(seen.has(href)) return false;
-    try{
-      const r=await fetch(href); if(!r.ok) return false;
-      const html=await r.text();
-      const data=parsePost(html,href); data.index=i;
-      items.push(data); seen.add(href);
-      hudCount.textContent='Journal: '+items.length;
-      return true;
-    }catch{ return false; }
-  }
-  function parsePost(html,href){
-    const dom=document.createElement('div'); dom.innerHTML=html;
-    const title=(dom.querySelector('h1,h2,h3,h4,.post-title,.title')?.textContent||href).trim();
-    const desc=(dom.querySelector('p,.post-desc,.desc,.excerpt')?.textContent||'').trim().substring(0,120);
-    const img1=dom.querySelector('img.card-thumbnail,img')?.getAttribute('src')||'';
-    const img2=dom.querySelector('img.backdrop,img:nth-child(2),img')?.getAttribute('src')||img1;
-    let dateStr=(dom.querySelector('time')?.getAttribute('datetime')
-              ||dom.querySelector('.post-date')?.textContent
-              ||dom.querySelector('.date')?.textContent||'').trim();
-    const author=(dom.querySelector('.post-author')?.textContent
-               ||dom.querySelector('meta[name="author"]')?.getAttribute('content')
-               ||dom.querySelector('.author')?.textContent
-               ||'Dogeon Kim').trim();
-    const githubHref=dom.querySelector('.post-github,[data-github]')?.getAttribute('href')||null;
-    return {href,index:0,thumb:abs(img1),backdrop:abs(img2),title,desc,date:dateStr,author,githubHref};
-  }
-
-  function createCard(data,xStart){
-    const el=document.createElement('figure'); el.className='card';
-    const w=randBetween(180,240),h=w*1.3;
-    el.style.width=w+'px';
-    const y=randBetween(20,window.innerHeight-h-60);
-    el.style.left=xStart+'px'; el.style.top=y+'px';
-    renderCard(el,data);
-    el.addEventListener('click',()=>{ if(!pause && !wasDragged) openOverlay(data); });
-    stage.appendChild(el);
-    return {el,w,h,x:xStart,y,speed:SPEED_BASE+randBetween(-SPEED_VARIATION,SPEED_VARIATION),data};
-  }
-  function renderCard(el,data){
-    const author=escapeHtml(data.author||'');
-    const rel=relativeTime(data.date);
-    const bylineHtml=rel
-      ?'By <span class="author-name">'+author+'</span> · '+escapeHtml(rel)
-      :'By <span class="author-name">'+author+'</span>';
-    el.innerHTML='<div class="card-inner">'
-      +'<img class="thumb" src="'+data.thumb+'" alt="" loading="lazy" decoding="async"/>'
-      +'<figcaption class="meta">'
-      +'<h3 class="title" title="'+escapeHtml(data.title)+'">'+escapeHtml(data.title)+'</h3>'
-      +'<div class="subtitle" title="'+escapeHtml(data.desc)+'">'+escapeHtml(data.desc)+'</div>'
-      +'<div class="byline-compact">'+bylineHtml+'</div>'
-      +'</figcaption></div>';
-  }
-  function openOverlay(data){
-    pause=true;
-    ovTitle.textContent=data.title||'';
-    const rel=relativeTime(data.date);
-    ovByline.textContent='By '+(data.author||'')+(rel?' · '+rel:'');
-    ovDesc.textContent=data.desc||'';
-    ovOpen.href='/personal-journal/note.html?label='+data.index;
-    ovPreview.style.backgroundImage=data.backdrop?'url('+data.backdrop+')':'none';
-    if(data.githubHref){ovLabel.href=data.githubHref;ovLabel.style.display='';}
-    else ovLabel.style.display='none';
-    overlay.classList.add('open'); overlay.setAttribute('aria-hidden','false');
-  }
-  function closeOverlay(){
-    overlay.classList.remove('open'); overlay.setAttribute('aria-hidden','true'); pause=false;
-  }
-  ovClose.addEventListener('click',closeOverlay);
-  overlay.querySelector('.bg').addEventListener('click',closeOverlay);
-  document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeOverlay(); });
-  btnRefresh.addEventListener('click',()=>location.reload());
-
-  let last=0;
-  function loop(now){
-    const dt=Math.min(now-last,50); last=now;
-    if(!pause){
-      for(const c of cards){
-        c.x-=c.speed*(dt/16); c.el.style.left=c.x+'px';
-        if(c.x+c.w<-80){
-          c.x=window.innerWidth+randBetween(20,160);
-          c.y=randBetween(20,window.innerHeight-c.h-60);
-          c.el.style.top=c.y+'px';
-          const newData=items[Math.floor(Math.random()*items.length)];
-          renderCard(c.el,newData); c.data=newData;
-        }
-      }
-    }
-    requestAnimationFrame(loop);
-  }
-
-  (async function start(){
-    await discoverInitial();
-    if(items.length===0){
-      items=Array.from({length:6}).map((_,i)=>({
-        href:'post/post'+(i+1)+'.html',index:i+1,
-        thumb:'https://picsum.photos/seed/pj'+i+'/480/360',
-        backdrop:'https://picsum.photos/seed/pjb'+i+'/1200/900',
-        title:'Journal '+(i+1),desc:'Personal journal entry.',
-        date:new Date().toISOString(),author:'Dogeon Kim'
-      }));
-    }
-    initCards(); requestAnimationFrame(loop);
-    setInterval(discoverIncremental,DISCOVERY.pollInterval);
-  })();
-
-  function initCards(){
-    cards=[]; stage.innerHTML='';
-    const count=Math.max(items.length,6);
-    let x=60;
-    for(let i=0;i<count;i++){
-      const c=createCard(items[i%items.length],x);
-      cards.push(c); x+=c.w+randBetween(40,100);
-    }
-  }
-  function randBetween(min,max){ return Math.random()*(max-min)+min; }
-  function relativeTime(dateStr){
-    if(!dateStr) return '';
-    const d=new Date(dateStr); if(isNaN(d.getTime())) return '';
-    const days=Math.floor((Date.now()-d.getTime())/86400000);
-    if(days===0) return 'today';
-    if(days<30)  return days+' days ago';
-    if(days<365) return Math.floor(days/30)+' months ago';
-    return '';
-  }
-  function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-})();
-</script>
-
-<!-- Three.js wireframe background -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-<script>
-(function(){
-  const canvas=document.getElementById('canvas-bg-journal');
-  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-  renderer.setSize(window.innerWidth,window.innerHeight);
-  renderer.setClearColor(0x000000,0);
-  const scene=new THREE.Scene();
-  const camera=new THREE.PerspectiveCamera(70,window.innerWidth/window.innerHeight,0.1,1000);
-  camera.position.z=28;
-  const mA=new THREE.MeshBasicMaterial({color:0xA8C4DF,wireframe:true,transparent:true,opacity:0.28});
-  const mB=new THREE.MeshBasicMaterial({color:0x7AAFD4,wireframe:true,transparent:true,opacity:0.18});
-  const mC=new THREE.MeshBasicMaterial({color:0xCDE0F0,wireframe:true,transparent:true,opacity:0.13});
-  const shapes=[];
-  function add(geo,mat,x,y,z,rx,ry,rz){
-    const m=new THREE.Mesh(geo,mat); m.position.set(x,y,z);
-    m.userData={rx,ry,rz,fo:Math.random()*Math.PI*2,fs:.28+Math.random()*.38,fa:.22+Math.random()*.32};
-    scene.add(m); shapes.push(m);
-  }
-  add(new THREE.IcosahedronGeometry(4.2,0),mA,-21,8,-9,.003,.005,.002);
-  add(new THREE.IcosahedronGeometry(2.4,0),mB,21,-5,-7,-.004,.003,.005);
-  add(new THREE.IcosahedronGeometry(1.7,0),mC,5,15,-13,.006,-.004,.003);
-  add(new THREE.OctahedronGeometry(3.0,0),mC,15,9,-5,.004,-.003,.006);
-  add(new THREE.OctahedronGeometry(1.9,0),mA,-15,-9,-11,-.005,.004,-.003);
-  add(new THREE.TorusGeometry(4.8,.24,6,22),mB,-7,-12,-17,.005,.003,.004);
-  add(new THREE.BoxGeometry(2.8,2.8,2.8),mC,18,-14,-10,.003,.005,.003);
-  add(new THREE.BoxGeometry(1.9,1.9,1.9),mA,-18,14,-16,-.004,.003,.005);
-  const pPos=new Float32Array(160*3);
-  for(let i=0;i<160;i++){ pPos[i*3]=(Math.random()-.5)*88; pPos[i*3+1]=(Math.random()-.5)*68; pPos[i*3+2]=(Math.random()-.5)*48-10; }
-  const pGeo=new THREE.BufferGeometry();
-  pGeo.setAttribute('position',new THREE.BufferAttribute(pPos,3));
-  scene.add(new THREE.Points(pGeo,new THREE.PointsMaterial({color:0x7AAFD4,size:.15,transparent:true,opacity:.32})));
-  let tx=0,ty=0,cx=0,cy=0;
-  document.addEventListener('mousemove',e=>{ tx=(e.clientX/window.innerWidth-.5)*2; ty=(e.clientY/window.innerHeight-.5)*2; });
-  const clock=new THREE.Clock();
-  (function animate(){
-    requestAnimationFrame(animate);
-    const el=clock.getElapsedTime();
-    cx+=(tx*2.4-cx)*.024; cy+=(-ty*1.7-cy)*.024;
-    camera.position.x=cx; camera.position.y=cy; camera.lookAt(scene.position);
-    shapes.forEach(s=>{
-      s.rotation.x+=s.userData.rx; s.rotation.y+=s.userData.ry; s.rotation.z+=s.userData.rz;
-      s.position.y+=Math.sin(el*s.userData.fs+s.userData.fo)*s.userData.fa*.007;
-    });
-    renderer.render(scene,camera);
-  })();
-  window.addEventListener('resize',()=>{ camera.aspect=window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth,window.innerHeight); });
-})();
-</script>
-
-<script src="back.js" defer></script>
+      </a>
+      <a class="card" href="/personal-journal/note.html?label=4" data-reveal>
+        <img src="/assets/img/featured.jpg" width="1360" height="840" alt="브레멘 음악대 동상" loading="lazy" decoding="async">
+        <div class="card-text">
+          <time class="mono" datetime="2025-08-13">2025.08.13</time>
+          <h2>Bremen 3일차 여행</h2>
+          <p>Der Weg nach Hause</p>
+        </div>
+      </a>
+      <a class="card" href="/personal-journal/note.html?label=3" data-reveal>
+        <img src="/assets/img/j_weser.jpg" width="1176" height="720" alt="베저부르크 미술관의 흰 전시실" loading="lazy" decoding="async">
+        <div class="card-text">
+          <time class="mono" datetime="2025-08-07">2025.08.07</time>
+          <h2>Weserburg Museum</h2>
+          <p>Weserburg Museum für moderne Kunst</p>
+        </div>
+      </a>
+      <a class="card" href="/personal-journal/note.html?label=2" data-reveal>
+        <img src="/assets/img/j_hafen2.jpg" width="1176" height="720" alt="브레멘 마르크트 광장" loading="lazy" decoding="async">
+        <div class="card-text">
+          <time class="mono" datetime="2025-08-02">2025.08.02</time>
+          <h2>Deutschland Hafenstadt 2</h2>
+          <p>Mein zweites Reisejournal</p>
+        </div>
+      </a>
+      <a class="card" href="/personal-journal/note.html?label=1" data-reveal>
+        <img src="/assets/img/j_hafen1.jpg" width="1176" height="720" alt="함부르크 엘프필하모니" loading="lazy" decoding="async">
+        <div class="card-text">
+          <time class="mono" datetime="2025-08-02">2025.08.02</time>
+          <h2>Deutschland Hafenstadt</h2>
+          <p>Mein erstes Reisejournal</p>
+        </div>
+      </a>
+    </section>
+  </main>
+  <footer class="wrap footer">
+    <p class="mono">© <span id="year">2026</span> Larvatus</p>
+    <a href="#main" aria-label="맨 위로"><span class="arrow arrow--up" aria-hidden="true"></span></a>
+  </footer>
 </body>
 </html>

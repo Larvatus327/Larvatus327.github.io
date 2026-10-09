@@ -1,530 +1,65 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Note Viewer</title>
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Caveat:wght@400;600;700&family=DM+Sans:wght@300;400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-
-  <!-- SVG rough filter -->
-  <svg width="0" height="0" style="position:absolute">
-    <defs>
-      <filter id="rough-sm" x="-5%" y="-5%" width="110%" height="110%">
-        <feTurbulence type="fractalNoise" baseFrequency="0.055" numOctaves="3" seed="7" result="noise"/>
-        <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" xChannelSelector="R" yChannelSelector="G"/>
-      </filter>
-    </defs>
-  </svg>
-
-  <style>
-    /* ── 디자인 토큰 ── */
-    :root {
-      --bg:    #ECEBE6;
-      --bg2:   #E3E2DD;
-      --white: #F7F6F2;
-      --blue:  #A8C4DF;
-      --blue2: #7AAFD4;
-      --blue3: #CDE0F0;
-      --dark:  #222220;
-      --mid:   #6A6A65;
-      --light: #ADADAA;
-      --bdr:   rgba(34,34,32,0.13);
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      background: var(--bg);
-      font-family: 'DM Sans', sans-serif;
-      color: var(--dark);
-      min-height: 100vh;
-      cursor: none;
-    }
-
-    /* ── grain overlay ── */
-    body::after {
-      content: '';
-      position: fixed; inset: 0;
-      pointer-events: none; z-index: 9999;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
-      opacity: 0.035; mix-blend-mode: multiply;
-    }
-
-    /* ── 커스텀 커서 ── */
-    .cursor {
-      width: 12px; height: 12px;
-      background: var(--blue2);
-      border-radius: 50%;
-      position: fixed; pointer-events: none; z-index: 99999;
-      transform: translate(-50%, -50%);
-      transition: width .18s, height .18s, opacity .18s;
-    }
-    .cursor-ring {
-      width: 28px; height: 28px;
-      border: 1.5px solid var(--blue2);
-      border-radius: 50%;
-      position: fixed; pointer-events: none; z-index: 99998;
-      transform: translate(-50%, -50%);
-      transition: left .09s, top .09s, width .18s, height .18s;
-      opacity: .45;
-      filter: url(#rough-sm);
-    }
-    body.cursor-click .cursor { transform: translate(-50%,-50%) scale(0.6); }
-    body.cursor-hover .cursor { width: 18px; height: 18px; opacity: .6; }
-    body.cursor-hover .cursor-ring { width: 48px; height: 48px; }
-
-    /* ── 뒤로가기 버튼 ── */
-    #backButton {
-      position: fixed;
-      top: 20px; left: 20px;
-      z-index: 1000;
-      font-family: 'Caveat', cursive;
-      font-size: 16px;
-      color: var(--dark);
-      background: var(--white);
-      border: 1.5px solid var(--bdr);
-      border-radius: 4px;
-      padding: 8px 18px;
-      cursor: pointer;
-      box-shadow: 3px 3px 0 rgba(34,34,32,0.12);
-      transition: transform 0.15s, box-shadow 0.15s, background 0.18s;
-      display: flex; align-items: center; gap: 6px;
-    }
-    #backButton:hover {
-      transform: translate(-2px, -2px);
-      box-shadow: 5px 5px 0 var(--dark);
-      background: var(--blue3);
-      border-color: var(--blue2);
-    }
-
-    /* ── 메인 콘텐츠 박스 ── */
-    #noteContent {
-      max-width: 860px;
-      margin: 0 auto;
-      padding: 80px 24px 60px;
-    }
-
-    /* Notion HTML이 삽입되는 실제 콘텐츠 래퍼 */
-    .notion-wrapper {
-      background: var(--white);
-      border: 1.5px solid var(--bdr);
-      border-radius: 6px;
-      box-shadow: 4px 6px 0 rgba(34,34,32,0.08);
-      padding: 48px 56px;
-      position: relative;
-      overflow: hidden;
-    }
-    /* 상단 파란 바 */
-    .notion-wrapper::before {
-      content: '';
-      position: absolute; top: 0; left: 0; right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, var(--blue3), var(--blue2));
-    }
-
-    /* ── Notion 내용 기본 스타일 리셋 ── */
-    .notion-wrapper * {
-      font-family: 'DM Sans', sans-serif;
-      color: var(--dark);
-    }
-    .notion-wrapper h1 {
-      font-family: 'Anton', sans-serif;
-      font-size: clamp(28px, 4vw, 46px);
-      letter-spacing: -0.02em;
-      line-height: 1.1;
-      color: var(--dark);
-      margin-bottom: 16px;
-    }
-    .notion-wrapper h2 {
-      font-family: 'Anton', sans-serif;
-      font-size: clamp(20px, 2.5vw, 30px);
-      letter-spacing: -0.01em;
-      line-height: 1.15;
-      color: var(--dark);
-      margin: 32px 0 12px;
-    }
-    .notion-wrapper h3 {
-      font-family: 'Anton', sans-serif;
-      font-size: clamp(16px, 2vw, 22px);
-      line-height: 1.2;
-      color: var(--dark);
-      margin: 24px 0 8px;
-    }
-    .notion-wrapper p {
-      font-size: 16px;
-      line-height: 1.75;
-      color: var(--mid);
-      margin-bottom: 14px;
-    }
-    .notion-wrapper a {
-      color: var(--blue2);
-      text-decoration: underline;
-      text-decoration-color: rgba(122,175,212,0.4);
-      transition: color 0.2s;
-    }
-    .notion-wrapper a:hover { color: var(--dark); }
-    .notion-wrapper img {
-      max-width: 100%;
-      height: auto;
-      display: block;
-      margin: 1.5rem auto;
-      border: 1.5px solid var(--bdr);
-      border-radius: 4px;
-    }
-    .notion-wrapper pre, .notion-wrapper code {
-      background: var(--bg2);
-      border: 1.5px solid var(--bdr);
-      border-radius: 3px;
-      font-family: 'Space Mono', monospace;
-      font-size: 13px;
-    }
-    .notion-wrapper pre {
-      padding: 16px 20px;
-      overflow-x: auto;
-      margin: 16px 0;
-    }
-    .notion-wrapper code {
-      padding: 2px 6px;
-      font-size: 12px;
-    }
-    .notion-wrapper blockquote {
-      border-left: 3px solid var(--blue2);
-      background: var(--blue3);
-      padding: 12px 18px;
-      border-radius: 0 4px 4px 0;
-      margin: 16px 0;
-      color: var(--mid);
-    }
-    .notion-wrapper hr {
-      border: none;
-      border-top: 1.5px solid var(--bdr);
-      margin: 32px 0;
-    }
-    .notion-wrapper ul, .notion-wrapper ol {
-      padding-left: 24px;
-      margin-bottom: 14px;
-    }
-    .notion-wrapper li {
-      margin-bottom: 6px;
-      line-height: 1.7;
-      color: var(--mid);
-    }
-    .notion-wrapper table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 16px 0;
-      font-size: 14px;
-    }
-    .notion-wrapper th {
-      background: var(--bg2);
-      border: 1.5px solid var(--bdr);
-      padding: 10px 14px;
-      font-family: 'Space Mono', monospace;
-      font-size: 11px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--mid);
-    }
-    .notion-wrapper td {
-      border: 1.5px solid var(--bdr);
-      padding: 10px 14px;
-      color: var(--mid);
-    }
-    .notion-wrapper tr:nth-child(even) td { background: var(--bg2); }
-
-    /* Notion column layout */
-    .column-list {
-      display: flex;
-      gap: 24px;
-      flex-wrap: wrap;
-      margin: 2rem 0;
-    }
-    .column {
-      flex: 1 1 0;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-    .column .image { text-align: center; }
-    .column .image img { width: 100%; height: auto; display: block; }
-    .page-cover-image {
-      display: block;
-      width: 100%;
-      max-height: 30vh;
-      object-fit: cover;
-      margin-bottom: 32px;
-      border-radius: 4px;
-    }
-
-    /* Notion bookmark */
-    .bookmark {
-      display: flex;
-      flex-direction: row;
-      width: 100%;
-      border: 1.5px solid var(--bdr);
-      border-radius: 4px;
-      overflow: hidden;
-      text-decoration: none;
-      margin: 1em 0;
-      transition: box-shadow 0.2s, transform 0.2s;
-      background: var(--white);
-    }
-    .bookmark:hover {
-      transform: translateY(-2px);
-      box-shadow: 3px 4px 0 rgba(34,34,32,0.1);
-    }
-    .bookmark-info { padding: 12px 16px; flex: 1; }
-    .bookmark-title { font-size: 14px; font-weight: 600; color: var(--dark); margin-bottom: 4px; }
-    .bookmark-description { font-size: 12px; color: var(--mid); }
-    .bookmark-href { font-size: 11px; color: var(--light); margin-top: 6px; display: flex; align-items: center; gap: 4px; }
-    .bookmark-href img { width: 14px; height: 14px; }
-    .bookmark-image { width: 28%; max-height: 100px; object-fit: cover; }
-
-    /* ── 댓글 섹션 ── */
-    #commentSection {
-      max-width: 860px;
-      margin: 0 auto;
-      padding: 0 24px 80px;
-    }
-    .comment-box {
-      background: var(--white);
-      border: 1.5px solid var(--bdr);
-      border-radius: 6px;
-      padding: 32px 40px;
-      box-shadow: 4px 6px 0 rgba(34,34,32,0.06);
-    }
-    .comment-box h3 {
-      font-family: 'Anton', sans-serif;
-      font-size: 18px;
-      color: var(--dark);
-      margin-bottom: 20px;
-      letter-spacing: -0.01em;
-    }
-    .comment-form {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 28px;
-    }
-    .comment-form input[type="text"],
-    .comment-form textarea {
-      font-family: 'Caveat', cursive;
-      font-size: 15px;
-      color: var(--dark);
-      background: var(--bg2);
-      border: 1.5px solid var(--bdr);
-      border-radius: 3px;
-      padding: 10px 14px;
-      outline: none;
-      transition: border-color 0.2s;
-      resize: none;
-    }
-    .comment-form input:focus,
-    .comment-form textarea:focus { border-color: var(--blue2); }
-    .comment-form input::placeholder,
-    .comment-form textarea::placeholder { color: var(--light); font-style: italic; }
-
-    #submitComment {
-      align-self: flex-end;
-      font-family: 'Caveat', cursive;
-      font-size: 15px;
-      background: var(--dark);
-      color: var(--white);
-      border: 1.5px solid var(--dark);
-      border-radius: 3px;
-      padding: 8px 22px;
-      cursor: pointer;
-      transition: background 0.18s, border-color 0.18s;
-    }
-    #submitComment:hover { background: var(--blue2); border-color: var(--blue2); }
-
-    /* 댓글 목록 */
-    #commentList {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-    #commentList li {
-      background: var(--bg2);
-      border: 1.5px solid var(--bdr);
-      border-radius: 4px;
-      padding: 12px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .comment-author {
-      font-family: 'Anton', sans-serif;
-      font-size: 13px;
-      letter-spacing: 0.02em;
-    }
-    .comment-text {
-      font-family: 'Caveat', cursive;
-      font-size: 15px;
-      color: var(--mid);
-      line-height: 1.5;
-    }
-    .comment-meta {
-      font-family: 'Space Mono', monospace;
-      font-size: 9px;
-      letter-spacing: 0.12em;
-      color: var(--light);
-      margin-top: 4px;
-    }
-    .delete-btn {
-      align-self: flex-end;
-      font-family: 'Caveat', cursive;
-      font-size: 12px;
-      color: var(--light);
-      background: none;
-      border: none;
-      cursor: pointer;
-      transition: color 0.18s;
-    }
-    .delete-btn:hover { color: #e11d48; }
-
-    /* ── 반응형 ── */
-    @media (max-width: 640px) {
-      .notion-wrapper { padding: 28px 20px; }
-      .comment-box { padding: 20px 16px; }
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Mechanic Note 글 보기">
+  <meta name="theme-color" content="#EDF4FE">
+  <title>Mechanic Note | Larvatus</title>
+  <link rel="icon" href="/favicon.ico" sizes="32x32">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono&family=Gugi&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/script.js" defer></script>
+  <script src="/note.js" defer></script>
 </head>
-<body>
-
-  <!-- 커스텀 커서 -->
-  <div class="cursor" id="cursorDot"></div>
-  <div class="cursor-ring" id="cursorRing"></div>
-
-  <div id="particle-background"></div>
-
-  <!-- 뒤로가기 -->
-  <button id="backButton" onclick="history.back()">← Back</button>
-
-  <!-- Notion HTML 표시 영역 -->
-  <div id="noteContent">
-    <div class="notion-wrapper">노트를 불러오는 중...</div>
-  </div>
-
-  <!-- 댓글 섹션 -->
-  <section id="commentSection">
-    <div class="comment-box">
-      <h3>💬 Write a comment</h3>
-      <div class="comment-form">
-        <input type="text" id="userName" placeholder="Enter your name..." />
-        <textarea id="commentInput" rows="4" placeholder="Enter your comment..."></textarea>
-        <button id="submitComment">Post Comment</button>
-      </div>
-      <ul id="commentList"></ul>
+<body data-base="/mechanik-note" data-storage="comments_mechanik_" data-dates="{&quot;1&quot;: &quot;2025.08.31&quot;, &quot;2&quot;: &quot;2025.08.21&quot;, &quot;3&quot;: &quot;2025.08.11&quot;}" data-covers="{}" data-paths="{}">
+  <a class="skip-link" href="#main">본문으로 건너뛰기</a>
+  <header class="wrap nav">
+    <a class="wordmark" href="/index.html">larvatus</a>
+    <button class="btn btn-outline menu-toggle" type="button" aria-expanded="false" aria-controls="nav-panel">메뉴</button>
+    <div class="nav-panel" id="nav-panel">
+      <nav class="nav-links" aria-label="메인 메뉴"><a href="/personal-journal/personal-journal.html">Journal</a><a href="/mechanik-note/mechanik-note.html" aria-current="page">Mechanic</a><a href="/language-log/language-log.html">Language</a><a href="/side-project/side-project.html">Projects</a></nav>
+      <a class="btn btn-outline" href="https://github.com/Larvatus327" target="_blank" rel="noopener noreferrer">GitHub</a>
     </div>
-  </section>
-
-  <script src="back.js"></script>
-  <script>
-    const params = new URLSearchParams(window.location.search);
-    const label  = params.get("label");
-
-    if (label) {
-      fetch(`/mechanik-note/Label/label${label}/label${label}.html`)
-        .then(res => res.text())
-        .then(html => {
-          const doc = new DOMParser().parseFromString(html, "text/html");
-
-          doc.querySelectorAll("img").forEach(img => {
-            const src = img.getAttribute("src");
-            if (src && !src.startsWith("http") && !src.startsWith("/")) {
-              img.setAttribute("src", `/mechanik-note/Label/label${label}/${src}`);
-            }
-          });
-
-          const wrapper = document.querySelector(".notion-wrapper");
-          wrapper.innerHTML = doc.body.innerHTML;
-        })
-        .catch(err => {
-          document.querySelector(".notion-wrapper").innerHTML =
-            "<p style='color:var(--light);font-family:Caveat,cursive;font-size:16px;'>노트를 불러올 수 없습니다.</p>";
-          console.error(err);
-        });
-    } else {
-      document.querySelector(".notion-wrapper").innerHTML =
-        "<p style='color:var(--light);font-family:Caveat,cursive;font-size:16px;'>label 파라미터가 없습니다.</p>";
-    }
-
-    /* ── 댓글 ── */
-    function getStorageKey() { return `comments_mechanik_${label}`; }
-    function randomColor() {
-      const colors = ["#2563eb","#7AAFD4","#16a34a","#d97706","#9333ea","#e11d48"];
-      return colors[Math.floor(Math.random() * colors.length)];
-    }
-    function timeAgo(timestamp) {
-      const seconds = Math.floor((Date.now() - timestamp) / 1000);
-      const minutes = Math.floor(seconds / 60);
-      const hours   = Math.floor(minutes / 60);
-      const days    = Math.floor(hours / 24);
-      const years   = Math.floor(days / 365);
-      if (seconds < 60)  return `${seconds} seconds ago`;
-      if (minutes < 60)  return `${minutes} minutes ago`;
-      if (hours   < 24)  return `${hours} hours ago`;
-      if (days    < 365) return `${days} days ago`;
-      return `${years} years ago`;
-    }
-    function loadComments() {
-      const comments = JSON.parse(localStorage.getItem(getStorageKey()) || "[]");
-      const list = document.getElementById("commentList");
-      list.innerHTML = "";
-      comments.forEach(({ name, text, time, color }, index) => {
-        const li = document.createElement("li");
-        li.innerHTML = `
-          <span class="comment-author" style="color:${color || 'var(--blue2)'}">${name}</span>
-          <div class="comment-text">
-            ${text}
-            <div class="comment-meta">${time ? timeAgo(time) : ""}</div>
-          </div>
-          <button class="delete-btn" onclick="deleteComment(${index})">delete</button>`;
-        list.appendChild(li);
-      });
-    }
-    function deleteComment(index) {
-      const comments = JSON.parse(localStorage.getItem(getStorageKey()) || "[]");
-      comments.splice(index, 1);
-      localStorage.setItem(getStorageKey(), JSON.stringify(comments));
-      loadComments();
-    }
-    document.getElementById("submitComment").addEventListener("click", () => {
-      const name = document.getElementById("userName").value.trim();
-      const text = document.getElementById("commentInput").value.trim();
-      if (!name || !text) return;
-      const comments = JSON.parse(localStorage.getItem(getStorageKey()) || "[]");
-      comments.push({ name, text, time: Date.now(), color: randomColor() });
-      localStorage.setItem(getStorageKey(), JSON.stringify(comments));
-      document.getElementById("commentInput").value = "";
-      loadComments();
-    });
-    loadComments();
-  </script>
-
-  <!-- 커스텀 커서 JS -->
-  <script>
-  (function(){
-    const dot  = document.getElementById('cursorDot');
-    const ring = document.getElementById('cursorRing');
-    if(!dot || !ring) return;
-    document.addEventListener('mousemove', e=>{
-      dot.style.left  = e.clientX + 'px';
-      dot.style.top   = e.clientY + 'px';
-      ring.style.left = e.clientX + 'px';
-      ring.style.top  = e.clientY + 'px';
-    });
-    document.addEventListener('mousedown', ()=>{ document.body.classList.add('cursor-click'); });
-    document.addEventListener('mouseup',   ()=>{ document.body.classList.remove('cursor-click'); });
-    document.addEventListener('mouseover', e=>{
-      if(e.target.closest('button,a,input,textarea')) document.body.classList.add('cursor-hover');
-    });
-    document.addEventListener('mouseout', e=>{
-      if(e.target.closest('button,a,input,textarea')) document.body.classList.remove('cursor-hover');
-    });
-  })();
-  </script>
+  </header>
+  <main id="main">
+    <div class="wrap post-head">
+      <a class="back" href="/mechanik-note/mechanik-note.html"><span class="arrow arrow--left" aria-hidden="true"></span>Mechanic Note</a>
+      <h1 class="h1 metal-text" id="title">불러오는 중</h1>
+      <time class="mono post-date-m" data-date></time>
+    </div>
+    <div class="wrap post-cover" id="cover" hidden><img alt="" width="1360" height="840"></div>
+    <div class="wrap post-body">
+      <aside class="post-rail" aria-label="글 정보">
+        <dl data-date-group><dt>작성일</dt><dd><time data-date></time></dd></dl>
+        <dl><dt>카테고리</dt><dd>Mechanic Note</dd></dl>
+        <nav aria-label="목차" hidden><h2>목차</h2><div class="toc" id="toc"></div></nav>
+      </aside>
+      <article class="prose" id="note">글을 불러오는 중입니다.</article>
+    </div>
+    <section class="wrap comments" aria-labelledby="comments-title">
+      <div class="comments-inner">
+        <div>
+          <h2 id="comments-title">댓글</h2>
+          <p class="hint" id="comment-empty">아직 댓글이 없습니다.<br>첫 댓글을 남겨 보세요.</p>
+          <p class="hint">댓글은 이 브라우저에만 저장됩니다.</p>
+        </div>
+        <div>
+          <ul class="comment-list" id="comment-list"></ul>
+          <form class="comment-form" id="comment-form">
+            <label class="field">이름<input name="name" type="text" autocomplete="name" maxlength="40" required></label>
+            <label class="field">댓글<textarea name="text" maxlength="2000" required></textarea></label>
+            <button class="btn btn-primary" type="submit">댓글 남기기</button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="wrap footer">
+    <p class="mono">© <span id="year">2026</span> Larvatus</p>
+    <a href="#main" aria-label="맨 위로"><span class="arrow arrow--up" aria-hidden="true"></span></a>
+  </footer>
 </body>
 </html>

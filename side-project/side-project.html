@@ -1,141 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Side Project</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-  <link rel="stylesheet" href="eng.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="작은 아이디어를 직접 만들어보는 곳. 실험하고 부딪히며 알아갑니다.">
+  <meta name="theme-color" content="#EDF4FE">
+  <title>Side Project | Larvatus</title>
+  <link rel="icon" href="/favicon.ico" sizes="32x32">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono&family=Gugi&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/script.js" defer></script>
 </head>
 <body>
-  <!-- 커스텀 커서 -->
-  <div class="cursor" id="cursorDot"></div>
-  <div class="cursor-ring" id="cursorRing"></div>
-
-  <div id="particle-background"></div>
-  <div id="header-placeholder"></div>
-
-<script>
-  fetch("header.html")
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById("header-placeholder").innerHTML = html;
-
-      const style = document.createElement("link");
-      style.rel = "stylesheet";
-      style.href = "header.css";
-      document.head.appendChild(style);
-
-      const script = document.createElement("script");
-      script.src = "header.js";
-      script.onload = () => {
-        initHeader();
-
-        const searchInput = document.querySelector(".hd-search-input");
-        const searchBtn   = document.querySelector(".hd-search-btn");
-        const sortSel     = document.getElementById("sortSelect");
-
-        if (searchInput) {
-          searchInput.addEventListener("input", () => {
-            if (typeof filterGridCards === "function") filterGridCards(searchInput.value.trim());
-          });
-          searchInput.addEventListener("keydown", e => {
-            if (e.key === "Enter" && typeof filterGridCards === "function") filterGridCards(searchInput.value.trim());
-          });
-        }
-        if (searchBtn && searchInput) {
-          searchBtn.addEventListener("click", () => {
-            if (typeof filterGridCards === "function") filterGridCards(searchInput.value.trim());
-          });
-        }
-        if (sortSel) {
-          sortSel.addEventListener("change", () => {
-            if (typeof sortPosts === "function") sortPosts(sortSel.value);
-            if (typeof filterGridCards === "function") filterGridCards(searchInput ? searchInput.value.trim() : "");
-          });
-        }
-      };
-      document.body.appendChild(script);
-    })
-    .catch(err => console.error("헤더 로딩 실패:", err));
-</script>
-
-  <section class="hero">
-    <div class="hero-left" id="hero-left">
-      <h2>Side Project</h2>
-      <h1 id="hero-title">Plan. Craft. Test.</h1>
-      <p id="hero-desc">Documenting my learning through small, focused side projects.</p>
-      <button id="discoverBtn"><span class="combo_text">open Document →</span></button>
+  <a class="skip-link" href="#main">본문으로 건너뛰기</a>
+  <header class="wrap nav">
+    <a class="wordmark" href="/index.html">larvatus</a>
+    <button class="btn btn-outline menu-toggle" type="button" aria-expanded="false" aria-controls="nav-panel">메뉴</button>
+    <div class="nav-panel" id="nav-panel">
+      <nav class="nav-links" aria-label="메인 메뉴"><a href="/personal-journal/personal-journal.html">Journal</a><a href="/mechanik-note/mechanik-note.html">Mechanic</a><a href="/language-log/language-log.html">Language</a><a href="/side-project/side-project.html" aria-current="page">Projects</a></nav>
+      <a class="btn btn-outline" href="https://github.com/Larvatus327" target="_blank" rel="noopener noreferrer">GitHub</a>
     </div>
-
-    <div class="hero-right">
-      <div class="swiper mySwiper">
-        <div class="swiper-wrapper" id="cardContainer"></div>
-      </div>
-      <div class="swiper-post-number" id="postNumber">01</div>
-      <div class="swiper-controls">
-        <div class="arrow-buttons">
-          <div class="swiper-button-prev">◀</div>
-          <div class="swiper-button-next">▶</div>
-        </div>
+  </header>
+  <main id="main">
+    <div class="wrap page-head">
+      <div class="panel panel--silver">
+        <h1 class="h1 metal-text">Side Project</h1>
+        <div class="panel-info"><p>작은 아이디어를 직접 만들어보는 곳.<br>실험하고 부딪히며 알아갑니다.</p><span class="mono">글 0개</span></div>
       </div>
     </div>
-  </section>
-
-  <hr class="section-divider">
-
-  <section class="post-grid-wrapper">
-    <div class="toolbar">
-      <div class="grid-title-bar">
-        <h2 class="grid-title">
-          all Side Project
-          <span class="total-count-badge" id="headerTotalCount" style="font-size:.9rem; color:#555; margin-left:8px;">0 posts</span>
-        </h2>
-        <select id="sortSelect">
-          <option value="latest">Latest</option>
-          <option value="oldest">Oldest</option>
-          <option value="title">Title</option>
-        </select>
+    <section class="wrap section">
+      <div class="empty">
+        <h2>아직 올라온 프로젝트가 없습니다</h2>
+        <p>정리되는 대로 이곳에 올립니다.</p>
+        <a class="btn btn-outline" href="https://github.com/Larvatus327" target="_blank" rel="noopener noreferrer">GitHub</a>
       </div>
-    </div>
-
-    <div id="postGridContainer" class="post-grid-container" aria-live="polite"></div>
-
-    <div class="load-more-wrap">
-      <button id="loadMoreBtn" type="button">More projects</button>
-    </div>
-  </section>
-
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-  <script src="bg-shapes.js"></script>
-  <script src="back.js"></script>
-  <script src="eng.js"></script>
-
-<script>
-/* ── 커스텀 커서 ── */
-(function(){
-  const dot  = document.getElementById('cursorDot');
-  const ring = document.getElementById('cursorRing');
-  if(!dot || !ring) return;
-
-  document.addEventListener('mousemove', e=>{
-    dot.style.left  = e.clientX + 'px';
-    dot.style.top   = e.clientY + 'px';
-    ring.style.left = e.clientX + 'px';
-    ring.style.top  = e.clientY + 'px';
-  });
-  document.addEventListener('mousedown', ()=>{ document.body.classList.add('cursor-click'); });
-  document.addEventListener('mouseup',   ()=>{ document.body.classList.remove('cursor-click'); });
-
-  const hoverTargets = '#postGridContainer > *, a, button, select, label, [role="button"]';
-  document.addEventListener('mouseover', e=>{
-    if(e.target.closest(hoverTargets)) document.body.classList.add('cursor-hover');
-  });
-  document.addEventListener('mouseout', e=>{
-    if(e.target.closest(hoverTargets)) document.body.classList.remove('cursor-hover');
-  });
-})();
-</script>
+    </section>
+  </main>
+  <footer class="wrap footer">
+    <p class="mono">© <span id="year">2026</span> Larvatus</p>
+    <a href="#main" aria-label="맨 위로"><span class="arrow arrow--up" aria-hidden="true"></span></a>
+  </footer>
 </body>
 </html>

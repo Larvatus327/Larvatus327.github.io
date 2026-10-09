@@ -1,408 +1,65 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>Note Viewer</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Noto Sans KR', sans-serif;
-      background-color: #ffffff;
-    }
-
-    #particle-background {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: -1;
-      overflow: hidden;
-    }
-
-    .particle {
-      position: absolute;
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-    }
-
-    .line {
-      position: absolute;
-      height: 2px;
-      transform-origin: 0 50%;
-      pointer-events: none;
-    }
-
-    #noteContent {
-      max-width: 900px;
-      margin: 40px auto;
-      padding: 30px;
-      background: rgba(255, 255, 255, 0.8);
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-    }
-
-    #noteContent img {
-      max-width: 100%;
-      height: auto;
-      display: block;
-      margin: 1.5rem auto;
-    }
-
-    #commentSection {
-      max-width: 900px;
-      margin: 60px auto;
-      padding: 30px;
-      background-color: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    }
-
-    #commentSection h3 {
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 20px;
-    }
-
-    .comment-form {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 30px;
-    }
-
-    .comment-form input[type="text"],
-    .comment-form textarea {
-      font-size: 0.95rem;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      background: white;
-      color: #333;
-    }
-
-    .comment-form input[type="text"] {
-      width: 200px;
-      padding: 8px 12px;
-    }
-
-    .comment-form textarea {
-      width: 75%;
-      max-width: 100%;
-      padding: 10px 14px;
-      resize: vertical;
-    }
-
-    #submitComment {
-      width: fit-content;
-      background-color: #3b82f6;
-      color: white;
-      font-weight: bold;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    #submitComment:hover {
-      background-color: #2563eb;
-    }
-
-    #commentList {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    #commentList li {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 16px 20px;
-      border-radius: 12px;
-      background-color: rgba(255, 255, 255, 0.6);
-      backdrop-filter: blur(6px);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-      border: 1px solid rgba(0, 0, 0, 0.05);
-    }
-
-    .comment-author {
-      display: flex;
-      align-items: center;
-      font-weight: bold;
-      font-size: 0.95rem;
-      min-width: 80px;
-    }
-
-    .comment-text {
-      flex: 1;
-      font-size: 0.95rem;
-      color: #333;
-      word-break: break-word;
-    }
-
-    .comment-meta {
-      font-size: 0.8rem;
-      color: #888;
-      margin-top: 4px;
-    }
-
-    .delete-btn {
-      cursor: pointer;
-      font-size: 1.1rem;
-      color: #888;
-      border: none;
-      background: none;
-    }
-
-    .delete-btn:hover {
-      color: #e11d48;
-    }
-
-    @import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap');
-
-    #backButton {
-        position: fixed;
-        top: 20px;
-        left: 20px;
-        z-index: 1000;
-
-        font-family: 'Noto Sans KR', sans-serif;
-        font-size: 16px;
-        color: #000;
-
-        background-color: white;
-        border: 3px solid black;
-        border-radius: 10px;
-
-        padding: 8px 16px;
-        cursor: pointer;
-
-        box-shadow: 4px 4px 0 black; /* 오른쪽 아래 그림자 */
-        transition: all 0.1s ease-in-out;
-    }
-
-    #backButton:hover {
-    transform: translate(-1px, -1px);
-    box-shadow: 5px 5px 0 black;
-    }
-
-    /* Notion 2열 이미지 정렬용 */
-.column-list {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-  margin: 2rem 0;
-}
-
-.column {
-  flex: 1 1 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.column .image {
-  text-align: center;
-}
-
-.column .image img {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-.page-cover-image {
-  display: block;
-  object-fit: cover;
-  width: 100%;
-  max-height: 30vh;  /* ← 이게 문제 */
-}
-.bookmark {
-  display: flex;
-  flex-direction: row;
-  width: 100%;
-  max-width: 900px;
-  margin: 1em auto;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  overflow: hidden;
-  text-decoration: none;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.bookmark:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.bookmark-info {
-  padding: 0.75em 1em;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.bookmark-title {
-  font-size: 1em;
-  font-weight: 600;
-  margin-bottom: 0.3em;
-  color: #333;
-  line-height: 1.2;
-}
-
-.bookmark-description {
-  font-size: 0.85em;
-  color: #666;
-  margin-bottom: 0.5em;
-  line-height: 1.3;
-  max-height: 2.6em; /* 줄 수 제한 */
-  overflow: hidden;
-}
-
-.bookmark-href {
-  font-size: 0.75em;
-  color: #888;
-  display: flex;
-  align-items: center;
-  gap: 0.4em;
-}
-
-.bookmark-href img {
-  width: 14px;
-  height: 14px;
-}
-
-.bookmark-image {
-  width: 28%;
-  max-height: 100px;
-  object-fit: cover;
-}
-
-
-
-
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Personal Journal 글 보기">
+  <meta name="theme-color" content="#EDF4FE">
+  <title>Personal Journal | Larvatus</title>
+  <link rel="icon" href="/favicon.ico" sizes="32x32">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono&family=Gugi&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/script.js" defer></script>
+  <script src="/note.js" defer></script>
 </head>
-<body>
-  <div id="particle-background"></div>
-  <button id="backButton">←</button>
-
-  <div id="noteContent">노트를 불러오는 중...</div>
-  <section id="commentSection">
-    <h3>💬 Write a comment</h3>
-    <div class="comment-form">
-      <input type="text" id="userName" placeholder="Enter your name..." />
-      <textarea id="commentInput" rows="4" placeholder="Enter your comment..."></textarea>
-      <button id="submitComment">Post Comment</button>
+<body data-base="/personal-journal" data-storage="comments_label_" data-dates="{&quot;1&quot;: &quot;2025.08.02&quot;, &quot;2&quot;: &quot;2025.08.02&quot;, &quot;3&quot;: &quot;2025.08.07&quot;, &quot;4&quot;: &quot;2025.08.13&quot;, &quot;5&quot;: &quot;2025.08.31&quot;}" data-covers="{&quot;1&quot;: &quot;/assets/img/j_hafen1.jpg&quot;, &quot;2&quot;: &quot;/assets/img/j_hafen2.jpg&quot;, &quot;3&quot;: &quot;/assets/img/j_weser.jpg&quot;, &quot;4&quot;: &quot;/assets/img/featured.jpg&quot;, &quot;5&quot;: &quot;/assets/img/j_leipzig.jpg&quot;}" data-paths="{}">
+  <a class="skip-link" href="#main">본문으로 건너뛰기</a>
+  <header class="wrap nav">
+    <a class="wordmark" href="/index.html">larvatus</a>
+    <button class="btn btn-outline menu-toggle" type="button" aria-expanded="false" aria-controls="nav-panel">메뉴</button>
+    <div class="nav-panel" id="nav-panel">
+      <nav class="nav-links" aria-label="메인 메뉴"><a href="/personal-journal/personal-journal.html" aria-current="page">Journal</a><a href="/mechanik-note/mechanik-note.html">Mechanic</a><a href="/language-log/language-log.html">Language</a><a href="/side-project/side-project.html">Projects</a></nav>
+      <a class="btn btn-outline" href="https://github.com/Larvatus327" target="_blank" rel="noopener noreferrer">GitHub</a>
     </div>
-    <ul id="commentList"></ul>
-  </section>
-
-  <script src="back.js"></script>
-  <script>
-    const params = new URLSearchParams(window.location.search);
-    const label = params.get("label");
-    const authorColors = ['#aae2fa', '#c6b8f9', '#b2f0b4', '#fae09b', '#f9a9aa'];
-
-    if (label) {
-      fetch(`/personal-journal/Label/label${label}/label${label}.html`)
-        .then(res => res.text())
-        .then(html => {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, "text/html");
-
-          doc.querySelectorAll("img").forEach(img => {
-            const src = img.getAttribute("src");
-            if (src && !src.startsWith("http") && !src.startsWith("/")) {
-              img.src = `/personal-journal/Label/label${label}/${src}`;
-            }
-          });
-
-          document.getElementById("noteContent").innerHTML = doc.body.innerHTML;
-        })
-        .catch(err => {
-          document.getElementById("noteContent").innerHTML = "<p>노트를 불러올 수 없습니다.</p>";
-          console.error(err);
-        });
-    } else {
-      document.getElementById("noteContent").innerHTML = "<p>label 파라미터가 필요합니다.</p>";
-    }
-
-    const userNameInput = document.getElementById("userName");
-    const commentInput = document.getElementById("commentInput");
-    const commentList = document.getElementById("commentList");
-    const submitBtn = document.getElementById("submitComment");
-    const commentKey = `comments_label_${label}`;
-
-    function timeAgo(timestamp) {
-      const now = Date.now();
-      const diff = now - timestamp;
-      const seconds = Math.floor(diff / 1000);
-      if (seconds < 60) return `${seconds} seconds ago`;
-      const minutes = Math.floor(seconds / 60);
-      if (minutes < 60) return `${minutes} minutes ago`;
-      const hours = Math.floor(minutes / 60);
-      if (hours < 24) return `${hours} hours ago`;
-      const days = Math.floor(hours / 24);
-      if (days < 365) return `${days} days ago`;
-      const years = Math.floor(days / 365);
-      return `${years} years ago`;
-    }
-
-    function loadComments() {
-      const comments = JSON.parse(localStorage.getItem(commentKey) || "[]");
-      commentList.innerHTML = "";
-      comments.forEach(({ name, text, time, color }, index) => {
-        const li = document.createElement("li");
-        li.innerHTML = `
-          <span class="comment-author" style="color: ${color || '#000'}">${name}</span>
-          <div class="comment-text">
-            ${text}
-            <div class="comment-meta">${time ? timeAgo(time) : ""}</div>
-          </div>
-          <button class="delete-btn" data-index="${index}" title="삭제">🗑️</button>
-        `;
-        commentList.appendChild(li);
-      });
-
-      document.querySelectorAll(".delete-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const index = parseInt(btn.dataset.index);
-          const comments = JSON.parse(localStorage.getItem(commentKey) || "[]");
-          comments.splice(index, 1);
-          localStorage.setItem(commentKey, JSON.stringify(comments));
-          loadComments();
-        });
-      });
-    }
-
-    submitBtn.addEventListener("click", () => {
-      const name = userNameInput.value.trim();
-      const text = commentInput.value.trim();
-      if (!name || !text) return alert("이름과 댓글을 모두 입력해주세요.");
-
-      const color = authorColors[Math.floor(Math.random() * authorColors.length)];
-      const comments = JSON.parse(localStorage.getItem(commentKey) || "[]");
-      comments.push({ name, text, time: Date.now(), color });
-      localStorage.setItem(commentKey, JSON.stringify(comments));
-      userNameInput.value = "";
-      commentInput.value = "";
-      loadComments();
-    });
-
-    window.addEventListener("DOMContentLoaded", loadComments);
-
-    document.getElementById("backButton").addEventListener("click", () => {
-      history.back();
-    });
-  </script>
+  </header>
+  <main id="main">
+    <div class="wrap post-head">
+      <a class="back" href="/personal-journal/personal-journal.html"><span class="arrow arrow--left" aria-hidden="true"></span>Personal Journal</a>
+      <h1 class="h1 metal-text" id="title">불러오는 중</h1>
+      <time class="mono post-date-m" data-date></time>
+    </div>
+    <div class="wrap post-cover" id="cover" hidden><img alt="" width="1360" height="840"></div>
+    <div class="wrap post-body">
+      <aside class="post-rail" aria-label="글 정보">
+        <dl data-date-group><dt>작성일</dt><dd><time data-date></time></dd></dl>
+        <dl><dt>카테고리</dt><dd>Personal Journal</dd></dl>
+        <nav aria-label="목차" hidden><h2>목차</h2><div class="toc" id="toc"></div></nav>
+      </aside>
+      <article class="prose" id="note">글을 불러오는 중입니다.</article>
+    </div>
+    <section class="wrap comments" aria-labelledby="comments-title">
+      <div class="comments-inner">
+        <div>
+          <h2 id="comments-title">댓글</h2>
+          <p class="hint" id="comment-empty">아직 댓글이 없습니다.<br>첫 댓글을 남겨 보세요.</p>
+          <p class="hint">댓글은 이 브라우저에만 저장됩니다.</p>
+        </div>
+        <div>
+          <ul class="comment-list" id="comment-list"></ul>
+          <form class="comment-form" id="comment-form">
+            <label class="field">이름<input name="name" type="text" autocomplete="name" maxlength="40" required></label>
+            <label class="field">댓글<textarea name="text" maxlength="2000" required></textarea></label>
+            <button class="btn btn-primary" type="submit">댓글 남기기</button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="wrap footer">
+    <p class="mono">© <span id="year">2026</span> Larvatus</p>
+    <a href="#main" aria-label="맨 위로"><span class="arrow arrow--up" aria-hidden="true"></span></a>
+  </footer>
 </body>
 </html>
