@@ -1,7 +1,8 @@
 /* eng.js — Hero(스와이퍼) + 블로그 리스트, NaN-safe, 헤더/본문 개수 동기화 */
 
 (function(){
-  const TOTAL_POSTS      = 30;
+  // Keep this list in sync with published post files.
+  const POST_IDS = [1, 2, 3, 4];
   const GRID_LOAD_BATCH  = 8;
 
   // state
@@ -97,7 +98,7 @@
     swiper = new Swiper(".mySwiper", {
       slidesPerView: 3,
       spaceBetween: 30,
-      loop: true,
+      loop: postDataList.length > 3,
       autoplay: { delay: 3000, disableOnInteraction: false },
       speed: 800,
       navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
@@ -122,7 +123,7 @@
     main.className = "blog-main";
     main.innerHTML = `
       <h3 class="blog-title">
-        <a href="/mechanik-note/note.html?label=${data.labelIndex}">${data.title || ""}</a>
+        <a href="/side-project/note.html?label=${data.labelIndex}">${data.title || ""}</a>
       </h3>
       <div class="blog-meta">${metaHTML(data.author, data.date)}</div>
       <p class="blog-excerpt">${data.desc || ""}</p>
@@ -135,7 +136,7 @@
     const thumb = document.createElement("div");
     thumb.className = "blog-thumb";
     thumb.innerHTML = `
-      <a href="/mechanik-note/note.html?label=${data.labelIndex}">
+      <a href="/side-project/note.html?label=${data.labelIndex}">
         ${data.imgThumb ? `<img src="${data.imgThumb}" alt="">` : ""}
       </a>`;
     item.append(main, thumb);
@@ -251,7 +252,7 @@
 
   // ---------- 데이터 로드 ----------
   async function loadCards(){
-    for (let i = 1; i <= TOTAL_POSTS; i++){
+    for (const i of POST_IDS){
       try{
         const resp = await fetch(`post/post${i}.html`);
         if (!resp.ok) continue;

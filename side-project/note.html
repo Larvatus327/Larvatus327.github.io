@@ -216,9 +216,14 @@
     const label = params.get("label");
     const authorColors = ['#aae2fa', '#c6b8f9', '#b2f0b4', '#fae09b', '#f9a9aa'];
 
-    if (label) {
-      fetch(`/side-project/Label/label${label}/label${label}.html`)
-        .then(res => res.text())
+    const notePaths = {
+      1: 'Label/label1/label1.html', 2: 'Label/label2/label2.html',
+      3: 'Label/label3.html', 4: 'Label/label4.html'
+    };
+    if (Object.hasOwn(notePaths, label)) {
+      const noteUrl = new URL(notePaths[label], location.href);
+      fetch(noteUrl)
+        .then(res => { if (!res.ok) throw new Error('Note request failed'); return res.text(); })
         .then(html => {
           const parser = new DOMParser();
           const doc = parser.parseFromString(html, "text/html");
@@ -226,7 +231,7 @@
           doc.querySelectorAll("img").forEach(img => {
             const src = img.getAttribute("src");
             if (src && !src.startsWith("http") && !src.startsWith("/")) {
-              img.src = `/side-project/Label/label${label}/${src}`;
+              img.src = new URL(src, noteUrl).href;
             }
           });
 
@@ -237,7 +242,7 @@
           console.error(err);
         });
     } else {
-      document.getElementById("noteContent").innerHTML = "<p>label 파라미터가 필요합니다.</p>";
+      document.getElementById("noteContent").innerHTML = "<p>존재하는 글을 선택해 주세요.</p>";
     }
 
     const userNameInput = document.getElementById("userName");
